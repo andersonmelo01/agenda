@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.production
+.DS_Store
+*.log
+vendor
+storage/logs/*
+bootstrap/cache/*
+tests
+.phpunit.result.cache

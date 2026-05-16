@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: agenda_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: agenda
+      MYSQL_USER: adv
+      MYSQL_PASSWORD: gigalele
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - agenda_network
+
+  # Backend Laravel
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agenda_backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_KEY: base64:your_app_key_here
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: agenda
+      DB_USERNAME: adv
+      DB_PASSWORD: gigalele
+      CACHE_DRIVER: file
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: log
+    volumes:
+      - ./backend:/var/www
+      - ./backend/storage:/var/www/storage
+    depends_on:
+      - db
+    networks:
+      - agenda_network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agenda_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - agenda_network
+
+  # Apache (Servidor Web)
+  apache:
+    image: httpd:alpine
+    container_name: agenda_apache
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./apache/apache.conf:/usr/local/apache2/conf/extra/agenda.conf
+      - ./frontend/build:/var/www/frontend
+      - ./backend/public:/var/www/backend
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - agenda_network
+
+volumes:
+  db_data:
+
+networks:
+  agenda_network:
+    driver: bridge

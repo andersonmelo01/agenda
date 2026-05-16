@@ -1,0 +1,27 @@
+:root {
+  color-scheme: light;
+  --app-bg: #f4f7fb;
+  --app-surface: rgba(255, 255, 255, 0.9);
+  --app-border: rgba(148, 163, 184, 0.18);
+  --app-text: #0f172a;
+  --app-muted: #64748b;
+  --app-primary: #0f766e;
+  --app-secondary: #2563eb;
+}
+
+body {
+  margin: 0;
+  color: var(--app-text);
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.10), transparent 26%),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #eef3f9 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
