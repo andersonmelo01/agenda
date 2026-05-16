@@ -180,26 +180,6 @@ function Home() {
                   >
                     Ver planos
                   </Button>
-                  <Button
-                    component={RouterLink}
-                    to="/admin-login"
-                    size="large"
-                    variant="outlined"
-                    startIcon={<LockRoundedIcon fontSize="small" />}
-                    sx={{
-                      px: 3.5,
-                      py: 1.45,
-                      color: '#fff',
-                      borderColor: 'rgba(255,255,255,0.56)',
-                      fontWeight: 800,
-                      '&:hover': {
-                        borderColor: '#fff',
-                        bgcolor: 'rgba(255,255,255,0.08)',
-                      },
-                    }}
-                  >
-                    Área restrita
-                  </Button>
                 </Stack>
 
                 <Stack direction="row" spacing={{ xs: 2.5, md: 5 }} flexWrap="wrap" useFlexGap>

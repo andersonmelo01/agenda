@@ -6,7 +6,9 @@ import Navbar from '../components/Navbar';
 
 function PublicLayout() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/';
+  const requestedPath = location.state?.from?.pathname || '';
+  const isEstablishmentLogin = location.pathname === '/login' && requestedPath.startsWith('/agendar/');
+  const hideNavbar = location.pathname === '/' || isEstablishmentLogin;
 
   return (
     <Box sx={{ minHeight: '100vh' }}>

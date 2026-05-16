@@ -18,7 +18,10 @@ import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import { getAuthUser, isAuthenticated, logout } from '../utils/auth';
+
+const LAST_ESTABLISHMENT_PATH_KEY = 'last_establishment_booking_path';
 
 function Navbar() {
   const theme = useTheme();
@@ -29,11 +32,18 @@ function Navbar() {
   const user = getAuthUser();
   const isAdmin = ['admin', 'gestor'].includes(user?.role);
   const isClient = authenticated && !isAdmin;
+  const currentEstablishmentPath = location.pathname.startsWith('/agendar/') ? location.pathname : '';
+  const storedEstablishmentPath = sessionStorage.getItem(LAST_ESTABLISHMENT_PATH_KEY) || '';
+  const establishmentPath = currentEstablishmentPath || storedEstablishmentPath;
+  const isEstablishmentContext = isClient && Boolean(establishmentPath);
   const hideStartButton = location.pathname === '/login';
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true });
+    navigate('/login', {
+      replace: true,
+      state: establishmentPath ? { from: { pathname: establishmentPath } } : undefined,
+    });
   };
 
   return (
@@ -69,7 +79,7 @@ function Navbar() {
             <Box sx={{ minWidth: 0 }}>
               <Typography
                 component={RouterLink}
-                to="/"
+                to={isEstablishmentContext ? establishmentPath : '/'}
                 variant="h6"
                 fontWeight={800}
                 sx={{
@@ -98,7 +108,29 @@ function Navbar() {
           />
 
           <Stack direction="row" spacing={1} alignItems="center">
-            {!hideStartButton ? (
+            {isEstablishmentContext ? (
+              <>
+                <Button
+                  component={RouterLink}
+                  to={establishmentPath}
+                  variant="text"
+                  startIcon={<AddCircleOutlineRoundedIcon />}
+                  sx={{ minWidth: { xs: 'auto', sm: 0 }, px: { xs: 1.25, sm: 1.75 } }}
+                >
+                  Fazer reserva
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/minha-area"
+                  state={{ establishmentPath }}
+                  variant="text"
+                  startIcon={<EventNoteRoundedIcon />}
+                  sx={{ minWidth: { xs: 'auto', sm: 0 }, px: { xs: 1.25, sm: 1.75 } }}
+                >
+                  Histórico
+                </Button>
+              </>
+            ) : !hideStartButton ? (
               <Button
                 component={RouterLink}
                 to={isClient ? '/minha-area' : '/'}

@@ -51,6 +51,8 @@ const initialForm = {
   horario: '',
 };
 
+const LAST_ESTABLISHMENT_PATH_KEY = 'last_establishment_booking_path';
+
 function AgendamentoPublico() {
   const theme = useTheme();
   const user = getAuthUser();
@@ -73,6 +75,12 @@ function AgendamentoPublico() {
   const [error, setError] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
   const exclusiveMode = Boolean(estabelecimentoSlug);
+
+  useEffect(() => {
+    if (estabelecimentoSlug) {
+      sessionStorage.setItem(LAST_ESTABLISHMENT_PATH_KEY, `/agendar/${estabelecimentoSlug}`);
+    }
+  }, [estabelecimentoSlug]);
 
   const selectedEstablishment = useMemo(
     () => estabelecimentos.find((item) => String(item.id) === String(form.estabelecimento_id)),

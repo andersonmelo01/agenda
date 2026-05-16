@@ -79,6 +79,7 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const requestedPath = location.state?.from?.pathname || '';
+  const isEstablishmentLogin = requestedPath.startsWith('/agendar/');
   const [mode, setMode] = useState('login');
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
@@ -515,11 +516,13 @@ function Login() {
                     </Alert>
                   ) : null}
 
-                  <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                    <Button component={RouterLink} to="/" variant="text" startIcon={<PublicRoundedIcon />}>
-                      Página inicial
-                    </Button>
-                  </Stack>
+                  {!isEstablishmentLogin ? (
+                    <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                      <Button component={RouterLink} to="/" variant="text" startIcon={<PublicRoundedIcon />}>
+                        Página inicial
+                      </Button>
+                    </Stack>
+                  ) : null}
                 </Stack>
               </Box>
             </Grid>
