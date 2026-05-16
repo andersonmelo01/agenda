@@ -7,9 +7,9 @@ Este guia descreve a instalacao do Sistema Agenda em uma VPS Ubuntu usando Apach
 - API publica em `/api`
 - SPA React servida no mesmo dominio, com rotas como `/`, `/login`, `/admin-login` e `/agendar/{slug}`
 
-Nos exemplos abaixo, troque:
+Nos exemplos abaixo, o dominio usado e:
 
-- `agenda.seudominio.com` pelo dominio real
+- `kyonix.ams.dev.br`
 - `<URL_DO_REPOSITORIO>` pela URL do repositorio
 - senhas e credenciais por valores fortes de producao
 
@@ -102,7 +102,7 @@ Crie o banco e o usuario:
 
 ```sql
 CREATE DATABASE agenda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'agenda_user'@'localhost' IDENTIFIED BY 'troque_esta_senha';
+CREATE USER 'agenda_user'@'localhost' IDENTIFIED BY 'And95079@';
 GRANT ALL PRIVILEGES ON agenda.* TO 'agenda_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
@@ -131,7 +131,8 @@ APP_NAME="Sistema de Agendamento"
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
-APP_URL=https://agenda.seudominio.com
+APP_URL=https://kyonix.ams.dev.br
+APP_API_PREFIX=
 
 LOG_CHANNEL=stack
 LOG_LEVEL=error
@@ -147,16 +148,16 @@ SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 CACHE_STORE=database
 
-FRONTEND_URL=https://agenda.seudominio.com
-SANCTUM_STATEFUL_DOMAINS=agenda.seudominio.com
+FRONTEND_URL=https://kyonix.ams.dev.br
+SANCTUM_STATEFUL_DOMAINS=kyonix.ams.dev.br
 
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.seudominio.com
+MAIL_HOST=smtp.kyonix.ams.dev.br
 MAIL_PORT=587
 MAIL_USERNAME=usuario_smtp
 MAIL_PASSWORD=senha_smtp
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@seudominio.com
+MAIL_FROM_ADDRESS=noreply@kyonix.ams.dev.br
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
@@ -195,6 +196,8 @@ php artisan view:cache
 
 Observacao: este projeto possui uma rota web em closure em `backend/routes/web.php`, por isso o guia nao usa `php artisan route:cache`. Se essa rota for convertida para controller, o cache de rotas pode ser habilitado depois.
 
+Observacao: com o Apache usando `Alias /api /var/www/agenda/backend/public`, mantenha `APP_API_PREFIX=` vazio no `.env` de producao. O alias ja monta o backend em `/api`; se o Laravel tambem usar o prefixo interno `api`, a rota externa de login vira `/api/api/login`.
+
 ## 5. Gerar build do frontend React
 
 Instale dependencias e gere o build:
@@ -208,7 +211,7 @@ npm run build
 Por padrao, em producao o frontend usa API no mesmo dominio. Se precisar usar outro dominio para a API, crie `frontend/.env.production` antes do build:
 
 ```env
-REACT_APP_API_URL=https://api.seudominio.com
+REACT_APP_API_URL=https://api.kyonix.ams.dev.br
 ```
 
 Depois rode novamente:
@@ -229,8 +232,7 @@ Conteudo recomendado:
 
 ```apache
 <VirtualHost *:80>
-    ServerName agenda.seudominio.com
-    ServerAlias www.agenda.seudominio.com
+    ServerName kyonix.ams.dev.br
 
     DocumentRoot /var/www/agenda/frontend/build
 
@@ -275,6 +277,21 @@ sudo apache2ctl configtest
 sudo systemctl reload apache2
 ```
 
+Se a mesma VPS tambem hospeda outros dominios, como `app.advsis.com`, confira se o Apache esta associando `kyonix.ams.dev.br` ao VirtualHost correto:
+
+```bash
+sudo apache2ctl -S
+sudo ls -la /etc/apache2/sites-enabled
+sudo grep -R "app.advsis.com\|kyonix.ams.dev.br\|Redirect\|RewriteRule" -n /etc/apache2/sites-available /etc/apache2/sites-enabled
+```
+
+O resultado esperado e que `kyonix.ams.dev.br` apareca no arquivo `agenda.conf`. Se ele aparecer em outro arquivo, ou se houver `ServerAlias kyonix.ams.dev.br` no VirtualHost de `app.advsis.com`, remova esse alias do site antigo e recarregue o Apache:
+
+```bash
+sudo apache2ctl configtest
+sudo systemctl reload apache2
+```
+
 ## 7. Liberar firewall
 
 ```bash
@@ -288,7 +305,7 @@ sudo ufw status
 
 ```bash
 sudo apt install -y certbot python3-certbot-apache
-sudo certbot --apache -d agenda.seudominio.com -d www.agenda.seudominio.com
+sudo certbot --apache -d kyonix.ams.dev.br
 ```
 
 Teste a renovacao automatica:
@@ -367,13 +384,13 @@ sudo systemctl status mysql
 Teste a home:
 
 ```bash
-curl -I https://agenda.seudominio.com
+curl -I https://kyonix.ams.dev.br
 ```
 
 Teste a API:
 
 ```bash
-curl https://agenda.seudominio.com/api/public/estabelecimentos
+curl https://kyonix.ams.dev.br/api/public/estabelecimentos
 ```
 
 Confira as tabelas:
@@ -384,10 +401,10 @@ mysql -u agenda_user -p agenda -e "SHOW TABLES;"
 
 Acesse no navegador:
 
-- Home institucional: `https://agenda.seudominio.com/`
-- Login de clientes: `https://agenda.seudominio.com/login`
-- Area restrita gestor/admin: `https://agenda.seudominio.com/admin-login`
-- Link exclusivo por estabelecimento: `https://agenda.seudominio.com/agendar/{slug}`
+- Home institucional: `https://kyonix.ams.dev.br/`
+- Login de clientes: `https://kyonix.ams.dev.br/login`
+- Area restrita gestor/admin: `https://kyonix.ams.dev.br/admin-login`
+- Link exclusivo por estabelecimento: `https://kyonix.ams.dev.br/agendar/{slug}`
 
 ## 12. Atualizar uma instalacao existente
 
@@ -445,12 +462,73 @@ sudo systemctl reload apache2
 
 Confira se o `Alias /api /var/www/agenda/backend/public` existe no VirtualHost e se o arquivo `backend/public/.htaccess` esta presente.
 
+**Erro ao fazer login na VPS**
+
+Teste o endpoint direto na VPS:
+
+```bash
+curl -i -X POST https://kyonix.ams.dev.br/api/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@sistema.com","password":"010200"}'
+```
+
+Interprete o retorno:
+
+- `200 OK`: o backend autenticou; o problema esta no frontend/build/cache do navegador.
+- `404` ou HTML do React: o Apache nao esta encaminhando `/api` para o Laravel.
+- `404` com `The route login could not be found`: o Apache encaminhou para o Laravel, mas o prefixo foi duplicado/removido. Confirme `APP_API_PREFIX=` vazio no `.env`, rode `php artisan optimize:clear` e depois `php artisan config:cache`.
+- `419` ou erro de CORS: confira `FRONTEND_URL`, limpe o cache do Laravel e gere o build novamente.
+- `422 As credenciais estao incorretas`: o seeder nao rodou, a senha foi alterada, ou o usuario nao existe na base da VPS.
+- `500`: confira os logs do Laravel e Apache.
+
+Comandos uteis:
+
+```bash
+cd /var/www/agenda/backend
+php artisan optimize:clear
+php artisan migrate --force
+php artisan db:seed --class=DatabaseSeeder --force
+php artisan config:cache
+
+mysql -u agenda_user -p agenda -e "SELECT id,email,role,empresa_id FROM users WHERE email='admin@sistema.com';"
+
+sudo tail -n 100 /var/www/agenda/backend/storage/logs/laravel.log
+sudo tail -n 100 /var/log/apache2/agenda_error.log
+```
+
+**Dominio abre outro subdominio**
+
+Se `https://kyonix.ams.dev.br` abrir `https://app.advsis.com/login`, os dois nomes provavelmente apontam para o mesmo IP e o Apache esta usando o VirtualHost errado ou existe um redirect no site antigo.
+
+Na VPS, rode:
+
+```bash
+sudo apache2ctl -S
+sudo grep -R "app.advsis.com\|kyonix.ams.dev.br\|Redirect\|RewriteRule" -n /etc/apache2/sites-available /etc/apache2/sites-enabled
+```
+
+Corrija para que:
+
+- `agenda.conf` tenha `ServerName kyonix.ams.dev.br`
+- o VirtualHost de `app.advsis.com` nao tenha `ServerAlias kyonix.ams.dev.br`
+- nenhum `Redirect` ou `RewriteRule` envie `kyonix.ams.dev.br` para `app.advsis.com/login`
+- o VirtualHost SSL gerado pelo Certbot tambem use `ServerName kyonix.ams.dev.br`
+
+Depois aplique:
+
+```bash
+sudo apache2ctl configtest
+sudo systemctl reload apache2
+curl -I https://kyonix.ams.dev.br
+```
+
 **CORS em producao**
 
 No deploy de dominio unico, mantenha:
 
 ```env
-FRONTEND_URL=https://agenda.seudominio.com
+FRONTEND_URL=https://kyonix.ams.dev.br
 ```
 
 Depois recarregue o cache:
